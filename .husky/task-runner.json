@@ -1,0 +1,9 @@
+{
+   "tasks": [
+      {
+         "name": "commit-message-linter",
+         "command": "dotnet",
+         "args": [ "husky", "exec", ".husky/scripts/commit-lint.csx", "--args", "${args}" ]
+      }
+   ]
+}
