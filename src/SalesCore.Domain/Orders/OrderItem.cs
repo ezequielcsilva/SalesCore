@@ -27,7 +27,7 @@ public sealed class OrderItem : Entity
     public static OrderItem Create(Guid productId, int quantity, decimal price)
         => new(Guid.NewGuid(), productId, quantity, price);
 
-    internal decimal GetAmount()
+    public decimal GetAmount()
     {
         return Quantity * Price;
     }
