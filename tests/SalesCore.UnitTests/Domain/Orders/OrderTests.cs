@@ -1,125 +1,144 @@
-using Bogus;
 using FluentAssertions;
 using SalesCore.Domain.Orders;
+using SalesCore.Domain.Vouchers;
 
 namespace SalesCore.UnitTests.Domain.Orders;
 
 public class OrderTests
 {
-    private readonly Faker _faker = new();
-
     [Fact]
-    public void Create_ShouldReturnValidOrder_WhenDataIsValid()
+    public void Create_ShouldInstantiateOrderCorrectly()
     {
         // Arrange
-        var customerId = _faker.Random.Guid();
-        var branchId = _faker.Random.Guid();
-        var utcNow = DateTime.UtcNow;
-        var discount = _faker.Random.Decimal(0, 100);
+        var customerId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        var dateAdded = DateTime.UtcNow;
 
         // Act
-        var order = Order.Create(customerId, branchId, utcNow, discount);
+        var order = Order.Create(customerId, branchId, dateAdded);
 
         // Assert
+        order.Should().NotBeNull();
         order.CustomerId.Should().Be(customerId);
         order.BranchId.Should().Be(branchId);
-        order.DateAdded.Should().BeCloseTo(utcNow, TimeSpan.FromSeconds(1));
-        order.Discount.Should().Be(discount);
+        order.DateAdded.Should().Be(dateAdded);
         order.TotalAmount.Should().Be(0);
-        order.CancelledItemsAmount.Should().Be(0);
+        order.HasVoucher.Should().BeFalse();
     }
 
     [Fact]
-    public void AddItem_ShouldAddNewItem_WhenProductDoesNotExist()
+    public void AddItem_ShouldIncreaseTotalAmount()
     {
         // Arrange
-        var order = Order.Create(_faker.Random.Guid(), _faker.Random.Guid(), DateTime.UtcNow);
-        var productId = _faker.Random.Guid();
-        var quantity = _faker.Random.Int(1, 100);
-        var price = _faker.Random.Decimal(1, 100);
+        var order = CreateSampleOrder();
+        var productId = Guid.NewGuid();
+        var quantity = 2;
+        var price = 50m;
 
         // Act
         order.AddItem(productId, quantity, price);
 
         // Assert
-        order.OrderItems.Should().ContainSingle();
-        var addedItem = order.OrderItems.First();
-        addedItem.ProductId.Should().Be(productId);
-        addedItem.Quantity.Should().Be(quantity);
-        addedItem.Price.Should().Be(price);
+        order.TotalAmount.Should().Be(100m);
+        order.OrderItems.Count.Should().Be(1);
     }
 
     [Fact]
-    public void AddItem_ShouldUpdateExistingItem_WhenProductAlreadyExists()
+    public void AddItem_ShouldUpdateExistingItemQuantityAndPrice()
     {
         // Arrange
-        var order = Order.Create(_faker.Random.Guid(), _faker.Random.Guid(), DateTime.UtcNow);
-        var productId = _faker.Random.Guid();
-        var initialQuantity = _faker.Random.Int(1, 10);
-        var initialPrice = _faker.Random.Decimal(1, 50);
+        var order = CreateSampleOrder();
+        var productId = Guid.NewGuid();
+        var initialQuantity = 1;
+        var initialPrice = 20m;
         order.AddItem(productId, initialQuantity, initialPrice);
 
-        var newQuantity = _faker.Random.Int(1, 100);
-        var newPrice = _faker.Random.Decimal(1, 100);
-
         // Act
-        order.AddItem(productId, newQuantity, newPrice);
+        var updatedQuantity = 3;
+        var updatedPrice = 30m;
+        order.AddItem(productId, updatedQuantity, updatedPrice);
 
         // Assert
-        order.OrderItems.Should().ContainSingle();
-        var updatedItem = order.OrderItems.First();
-        updatedItem.Quantity.Should().Be(newQuantity);
-        updatedItem.Price.Should().Be(newPrice);
+        var item = order.OrderItems.First(x => x.ProductId == productId);
+        item.Quantity.Should().Be(updatedQuantity);
+        item.Price.Should().Be(updatedPrice);
+        order.TotalAmount.Should().Be(90m);
     }
 
     [Fact]
-    public void CancelItem_ShouldSetItemAsCancelled_WhenProductExists()
+    public void CancelItem_ShouldUpdateCancelledItemsAmount()
     {
         // Arrange
-        var order = Order.Create(_faker.Random.Guid(), _faker.Random.Guid(), DateTime.UtcNow);
-        var productId = _faker.Random.Guid();
-        order.AddItem(productId, 1, 10);
+        var order = CreateSampleOrder();
+        var productId = Guid.NewGuid();
+        order.AddItem(productId, 2, 50m);
 
         // Act
         order.CancelItem(productId);
 
         // Assert
-        var cancelledItem = order.OrderItems.First();
-        cancelledItem.Cancelled.Should().BeTrue();
+        order.TotalAmount.Should().Be(0);
+        order.CancelledItemsAmount.Should().Be(100m);
     }
 
     [Fact]
-    public void CancelItem_ShouldNotThrow_WhenProductDoesNotExist()
+    public void AssociateVoucher_ShouldApplyDiscountCorrectly()
     {
         // Arrange
-        var order = Order.Create(_faker.Random.Guid(), _faker.Random.Guid(), DateTime.UtcNow);
-        var nonExistingProductId = _faker.Random.Guid();
+        var order = CreateSampleOrder();
+        var voucher = Voucher.Create("VOUCHER123", percentage: 10, discount: null, quantity: 1,
+                                     VoucherDiscountType.Percentage, DateTime.UtcNow.AddDays(1));
+
+        order.AddItem(Guid.NewGuid(), 2, 100m);
 
         // Act
-        Action act = () => order.CancelItem(nonExistingProductId);
+        order.AssociateVoucher(voucher);
 
         // Assert
-        act.Should().NotThrow();
+        order.HasVoucher.Should().BeTrue();
+        order.TotalAmount.Should().Be(180m);
+        order.Discount.Should().Be(20m);
     }
 
     [Fact]
-    public void CalculateOrderAmount_ShouldCalculateCorrectAmounts()
+    public void AssociateVoucher_WithFixedDiscount_ShouldApplyDiscountCorrectly()
     {
         // Arrange
-        var order = Order.Create(_faker.Random.Guid(), _faker.Random.Guid(), DateTime.UtcNow, discount: 20);
-        var activeProduct1 = _faker.Random.Guid();
-        var activeProduct2 = _faker.Random.Guid();
-        var cancelledProduct = _faker.Random.Guid();
+        var order = CreateSampleOrder();
+        var voucher = Voucher.Create("VOUCHER123", percentage: null, discount: 50m, quantity: 1,
+                                     VoucherDiscountType.Value, DateTime.UtcNow.AddDays(1));
 
-        order.AddItem(activeProduct1, 2, 10);
-        order.AddItem(activeProduct2, 3, 15);
-        order.AddItem(cancelledProduct, 1, 100);
+        order.AddItem(Guid.NewGuid(), 2, 100m);
 
         // Act
-        order.CancelItem(cancelledProduct);
+        order.AssociateVoucher(voucher);
 
         // Assert
-        order.TotalAmount.Should().Be(45);
-        order.CancelledItemsAmount.Should().Be(100);
+        order.HasVoucher.Should().BeTrue();
+        order.TotalAmount.Should().Be(150m);
+        order.Discount.Should().Be(50m);
+    }
+
+    [Fact]
+    public void RecalculateOrderAmounts_ShouldNotApplyDiscount_WhenVoucherIsNotPresent()
+    {
+        // Arrange
+        var order = CreateSampleOrder();
+        order.AddItem(Guid.NewGuid(), 2, 100m);
+
+        // Act
+        order.RecalculateOrderAmounts();
+
+        // Assert
+        order.TotalAmount.Should().Be(200m);
+        order.Discount.Should().Be(0);
+    }
+
+    private static Order CreateSampleOrder()
+    {
+        var customerId = Guid.NewGuid();
+        var branchId = Guid.NewGuid();
+        var dateAdded = DateTime.UtcNow;
+        return Order.Create(customerId, branchId, dateAdded);
     }
 }
