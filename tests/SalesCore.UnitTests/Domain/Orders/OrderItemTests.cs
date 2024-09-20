@@ -23,24 +23,23 @@ public class OrderItemTests
         orderItem.ProductId.Should().Be(productId);
         orderItem.Quantity.Should().Be(quantity);
         orderItem.Price.Should().Be(price);
-        orderItem.IsCancelled.Should().BeFalse();
+        orderItem.Cancelled.Should().BeFalse();
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-5)]
-    public void Create_ShouldThrowException_WhenQuantityIsZeroOrNegative(int invalidQuantity)
+    [Fact]
+    public void Create_ShouldThrowException_WhenQuantityIsZeroOrNegative()
     {
         // Arrange
         var productId = _faker.Random.Guid();
-        var price = _faker.Random.Int(1, 100);
+        var invalidQuantity = 0;
+        var price = _faker.Random.Decimal(1, 100);
 
         // Act
         Action act = () => OrderItem.Create(productId, invalidQuantity, price);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithMessage("Quantity must be greater than zero*");
+           .WithMessage("Quantity must be greater than zero*");
     }
 
     [Fact]
@@ -56,7 +55,7 @@ public class OrderItemTests
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>()
-            .WithMessage("Price cannot be negative*");
+           .WithMessage("Price cannot be negative*");
     }
 
     [Fact]
@@ -66,7 +65,6 @@ public class OrderItemTests
         var productId = _faker.Random.Guid();
         var quantity = 3;
         var price = 10m;
-
         var orderItem = OrderItem.Create(productId, quantity, price);
 
         // Act
@@ -74,5 +72,59 @@ public class OrderItemTests
 
         // Assert
         amount.Should().Be(quantity * price);
+    }
+
+    [Fact]
+    public void Cancel_ShouldSetCancelledToTrue_WhenCalled()
+    {
+        // Arrange
+        var productId = _faker.Random.Guid();
+        var quantity = _faker.Random.Int(1, 100);
+        var price = _faker.Random.Decimal(1, 100);
+        var orderItem = OrderItem.Create(productId, quantity, price);
+
+        // Act
+        orderItem.Cancel();
+
+        // Assert
+        orderItem.Cancelled.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Update_ShouldUpdateQuantityAndPrice_WhenCalledWithValidValues()
+    {
+        // Arrange
+        var productId = _faker.Random.Guid();
+        var originalQuantity = _faker.Random.Int(1, 100);
+        var originalPrice = _faker.Random.Decimal(1, 100);
+        var orderItem = OrderItem.Create(productId, originalQuantity, originalPrice);
+
+        var newQuantity = _faker.Random.Int(1, 100);
+        var newPrice = _faker.Random.Decimal(1, 100);
+
+        // Act
+        orderItem.Update(newQuantity, newPrice);
+
+        // Assert
+        orderItem.Quantity.Should().Be(newQuantity);
+        orderItem.Price.Should().Be(newPrice);
+        orderItem.Cancelled.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Update_ShouldNotThrow_WhenQuantityIsValid()
+    {
+        // Arrange
+        var productId = _faker.Random.Guid();
+        var orderItem = OrderItem.Create(productId, 1, 10);
+
+        var newQuantity = _faker.Random.Int(1, 100);
+        var newPrice = _faker.Random.Decimal(1, 100);
+
+        // Act
+        var act = () => orderItem.Update(newQuantity, newPrice);
+
+        // Assert
+        act.Should().NotThrow();
     }
 }

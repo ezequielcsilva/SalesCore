@@ -4,14 +4,12 @@ namespace SalesCore.Domain.Orders;
 
 public sealed class Order : Entity, IAggregateRoot
 {
-    private readonly List<OrderItem> _orderItems;
+    private readonly List<OrderItem> _orderItems = [];
 
-    private Order() : base(Guid.NewGuid())
-    {
-        _orderItems = new List<OrderItem>();
-    }
+    private Order()
+    { }
 
-    private Order(Guid id, Guid customerId, Guid branchId, DateTime utcNow, IEnumerable<OrderItem> orderItems, OrderStatus orderStatus, decimal discount = 0)
+    private Order(Guid id, Guid customerId, Guid branchId, DateTime utcNow, OrderStatus orderStatus, decimal discount = 0)
         : base(id)
     {
         CustomerId = customerId;
@@ -19,8 +17,6 @@ public sealed class Order : Entity, IAggregateRoot
         Discount = discount;
         DateAdded = utcNow;
         OrderStatus = orderStatus;
-        _orderItems = orderItems.ToList();
-        CalculateOrderAmount();
     }
 
     public long Code { get; private set; }
@@ -33,24 +29,49 @@ public sealed class Order : Entity, IAggregateRoot
     public OrderStatus OrderStatus { get; private set; }
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
-    public static Order Create(Guid customerId, Guid branchId, DateTime utcNow, IEnumerable<OrderItem> orderItems, decimal discount = 0)
+    public static Order Create(Guid customerId, Guid branchId, DateTime utcNow, decimal discount = 0)
     {
-        var order = new Order(Guid.NewGuid(), customerId, branchId, utcNow, orderItems, OrderStatus.Created, discount);
+        var order = new Order(Guid.NewGuid(), customerId, branchId, utcNow, OrderStatus.Pending, discount);
         return order;
     }
 
     private void CalculateOrderAmount()
     {
         var activeItemsAmount = _orderItems
-            .Where(item => !item.IsCancelled)
+            .Where(item => !item.Cancelled)
             .Sum(item => item.GetAmount());
 
         CancelledItemsAmount = _orderItems
-            .Where(item => item.IsCancelled)
+            .Where(item => item.Cancelled)
             .Sum(item => item.GetAmount());
 
         TotalAmount = activeItemsAmount - Discount;
 
         TotalAmount = Math.Max(0, TotalAmount);
+    }
+
+    public void AddItem(Guid productId, int quantity, decimal price)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(price);
+
+        var existingItem = OrderItems.FirstOrDefault(x => x.ProductId == productId);
+
+        if (existingItem is not null)
+        {
+            existingItem.Update(quantity, price);
+        }
+        else
+        {
+            _orderItems.Add(OrderItem.Create(productId, quantity, price));
+        }
+
+        CalculateOrderAmount();
+    }
+
+    public void CancelItem(Guid productId)
+    {
+        _orderItems.FirstOrDefault(x => x.ProductId == productId)?.Cancel();
+        CalculateOrderAmount();
     }
 }

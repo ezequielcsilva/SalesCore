@@ -15,14 +15,14 @@ public sealed class OrderItem : Entity
         ProductId = productId;
         Quantity = quantity;
         Price = price;
-        IsCancelled = false;
+        Cancelled = false;
     }
 
     public Guid OrderId { get; private set; }
     public Guid ProductId { get; private set; }
     public int Quantity { get; private set; }
     public decimal Price { get; private set; }
-    public bool IsCancelled { get; private set; }
+    public bool Cancelled { get; private set; }
 
     public static OrderItem Create(Guid productId, int quantity, decimal price)
         => new(Guid.NewGuid(), productId, quantity, price);
@@ -32,5 +32,12 @@ public sealed class OrderItem : Entity
         return Quantity * Price;
     }
 
-    public void Cancel() => IsCancelled = true;
+    public void Cancel() => Cancelled = true;
+
+    public void Update(int quantity, decimal price)
+    {
+        Quantity = quantity;
+        Price = price;
+        Cancelled = false;
+    }
 }
