@@ -9,9 +9,6 @@ public sealed class OrderItem : Entity
 
     private OrderItem(Guid id, Guid productId, int quantity, decimal price) : base(id)
     {
-        if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
-        if (price < 0) throw new ArgumentOutOfRangeException(nameof(price), "Price cannot be negative.");
-
         ProductId = productId;
         Quantity = quantity;
         Price = price;
@@ -25,7 +22,14 @@ public sealed class OrderItem : Entity
     public bool Cancelled { get; private set; }
 
     public static OrderItem Create(Guid productId, int quantity, decimal price)
-        => new(Guid.NewGuid(), productId, quantity, price);
+    {
+        if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
+        if (price < 0) throw new ArgumentOutOfRangeException(nameof(price), "Price cannot be negative.");
+
+        var orderItem = new OrderItem(Guid.NewGuid(), productId, quantity, price);
+
+        return orderItem;
+    }
 
     public decimal GetAmount()
     {
