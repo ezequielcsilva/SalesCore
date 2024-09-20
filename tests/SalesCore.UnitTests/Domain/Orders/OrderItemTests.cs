@@ -1,4 +1,4 @@
-﻿using AutoFixture;
+﻿using Bogus;
 using FluentAssertions;
 using SalesCore.Domain.Orders;
 
@@ -6,15 +6,15 @@ namespace SalesCore.UnitTests.Domain.Orders;
 
 public class OrderItemTests
 {
-    private readonly Fixture _fixture = new();
+    private readonly Faker _faker = new();
 
     [Fact]
     public void Create_ShouldReturnValidOrderItem_WhenDataIsValid()
     {
         // Arrange
-        var productId = _fixture.Create<Guid>();
-        var quantity = _fixture.Create<int>() % 10 + 1;
-        var price = _fixture.Create<decimal>() % 100 + 1;
+        var productId = _faker.Random.Guid();
+        var quantity = _faker.Random.Int(1, 100);
+        var price = _faker.Random.Decimal(1, 100);
 
         // Act
         var orderItem = OrderItem.Create(productId, quantity, price);
@@ -26,28 +26,29 @@ public class OrderItemTests
         orderItem.IsCancelled.Should().BeFalse();
     }
 
-    [Fact]
-    public void Create_ShouldThrowException_WhenQuantityIsZeroOrNegative()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-5)]
+    public void Create_ShouldThrowException_WhenQuantityIsZeroOrNegative(int invalidQuantity)
     {
         // Arrange
-        var productId = _fixture.Create<Guid>();
-        var invalidQuantity = 0;
-        var price = _fixture.Create<decimal>() % 100 + 1;
+        var productId = _faker.Random.Guid();
+        var price = _faker.Random.Int(1, 100);
 
         // Act
         Action act = () => OrderItem.Create(productId, invalidQuantity, price);
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>()
-           .WithMessage("Quantity must be greater than zero*");
+            .WithMessage("Quantity must be greater than zero*");
     }
 
     [Fact]
     public void Create_ShouldThrowException_WhenPriceIsNegative()
     {
         // Arrange
-        var productId = _fixture.Create<Guid>();
-        var quantity = _fixture.Create<int>() % 10 + 1;
+        var productId = _faker.Random.Guid();
+        var quantity = _faker.Random.Int(1, 100);
         var invalidPrice = -1m;
 
         // Act
@@ -55,14 +56,14 @@ public class OrderItemTests
 
         // Assert
         act.Should().Throw<ArgumentOutOfRangeException>()
-           .WithMessage("Price cannot be negative*");
+            .WithMessage("Price cannot be negative*");
     }
 
     [Fact]
     public void GetAmount_ShouldReturnCorrectAmount_WhenValidQuantityAndPrice()
     {
         // Arrange
-        var productId = _fixture.Create<Guid>();
+        var productId = _faker.Random.Guid();
         var quantity = 3;
         var price = 10m;
 
