@@ -31,4 +31,6 @@ public sealed class OrderItem : Entity
     {
         return Quantity * Price;
     }
+
+    public void Cancel() => IsCancelled = true;
 }

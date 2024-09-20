@@ -11,7 +11,7 @@ public sealed class Order : Entity, IAggregateRoot
         _orderItems = new List<OrderItem>();
     }
 
-    public Order(Guid id, Guid customerId, Guid branchId, DateTime utcNow, IEnumerable<OrderItem> orderItems, OrderStatus orderStatus, decimal discount = 0)
+    private Order(Guid id, Guid customerId, Guid branchId, DateTime utcNow, IEnumerable<OrderItem> orderItems, OrderStatus orderStatus, decimal discount = 0)
         : base(id)
     {
         CustomerId = customerId;
@@ -27,7 +27,8 @@ public sealed class Order : Entity, IAggregateRoot
     public Guid CustomerId { get; private set; }
     public Guid BranchId { get; private set; }
     public decimal Discount { get; private set; }
-    public decimal Amount { get; private set; }
+    public decimal TotalAmount { get; private set; }
+    public decimal CancelledItemsAmount { get; private set; }
     public DateTime DateAdded { get; private set; }
     public OrderStatus OrderStatus { get; private set; }
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
@@ -40,7 +41,16 @@ public sealed class Order : Entity, IAggregateRoot
 
     private void CalculateOrderAmount()
     {
-        Amount = _orderItems.Sum(item => item.GetAmount()) - Discount;
-        Amount = Math.Max(0, Amount);
+        var activeItemsAmount = _orderItems
+            .Where(item => !item.IsCancelled)
+            .Sum(item => item.GetAmount());
+
+        CancelledItemsAmount = _orderItems
+            .Where(item => item.IsCancelled)
+            .Sum(item => item.GetAmount());
+
+        TotalAmount = activeItemsAmount - Discount;
+
+        TotalAmount = Math.Max(0, TotalAmount);
     }
 }
