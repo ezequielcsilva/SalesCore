@@ -10,6 +10,8 @@
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
 			<_Parameter1>SalesCore.UnitTests</_Parameter1>
 		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>SalesCore.ArchitectureTests</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
-
 </Project>

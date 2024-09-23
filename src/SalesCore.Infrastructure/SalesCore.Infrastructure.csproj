@@ -28,4 +28,11 @@
     <ProjectReference Include="..\SalesCore.Application\SalesCore.Application.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>SalesCore.ArchitectureTests</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+
 </Project>
