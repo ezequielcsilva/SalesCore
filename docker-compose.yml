@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  salescore.api:
+    image: ${DOCKER_REGISTRY-}salescoreapi
+    container_name: SalesCore.Api
+    build:
+      context: .
+      dockerfile: src/SalesCore.Api/Dockerfile
+    depends_on:
+      - sales-core-db
+
+  sales-core-db:
+    image: postgres:latest
+    container_name: SalesCore.Db
+    environment:
+      - POSTGRES_DB=salescore
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
