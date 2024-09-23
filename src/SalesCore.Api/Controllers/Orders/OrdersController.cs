@@ -5,6 +5,7 @@ using SalesCore.Application.Orders.CreateOrder;
 using SalesCore.Application.Orders.DeleteOrder;
 using SalesCore.Application.Orders.GetOrderById;
 using SalesCore.Application.Orders.UpdateOrder;
+using SalesCore.Domain.Abstractions;
 
 namespace SalesCore.Api.Controllers.Orders;
 
@@ -14,6 +15,9 @@ namespace SalesCore.Api.Controllers.Orders;
 public class OrdersController(ISender sender) : ControllerBase
 {
     [HttpGet("{orderId:guid}")]
+    [ProducesResponseType(typeof(GetOrderByIdResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOrderById([FromRoute] Guid orderId, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new GetOrderByIdQuery(orderId), cancellationToken);
@@ -27,6 +31,8 @@ public class OrdersController(ISender sender) : ControllerBase
     }
 
     [HttpPost]
+    [ProducesResponseType(typeof(CreateOrderResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest orderRequest, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new CreateOrderCommand(orderRequest), cancellationToken);
@@ -36,10 +42,14 @@ public class OrdersController(ISender sender) : ControllerBase
             return BadRequest(result.Errors);
         }
 
-        return Ok();
+        return Ok(result.Value);
     }
 
     [HttpPut("{orderId:guid}")]
+    [ProducesResponseType(typeof(UpdateOrderResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> UpdateOrder([FromRoute] Guid orderId, [FromBody] UpdateOrderRequest orderRequest, CancellationToken cancellationToken)
     {
         if (orderRequest.OrderId != orderId)
@@ -54,10 +64,13 @@ public class OrdersController(ISender sender) : ControllerBase
             return BadRequest(result.Errors);
         }
 
-        return Ok();
+        return Ok(result.Value);
     }
 
     [HttpDelete("{orderId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(List<Error[]>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> DeleteOrder([FromRoute] Guid orderId, CancellationToken cancellationToken)
     {
         var result = await sender.Send(new DeleteOrderCommand(orderId), cancellationToken);
@@ -67,6 +80,6 @@ public class OrdersController(ISender sender) : ControllerBase
             return BadRequest(result.Errors);
         }
 
-        return Ok();
+        return NoContent();
     }
 }
