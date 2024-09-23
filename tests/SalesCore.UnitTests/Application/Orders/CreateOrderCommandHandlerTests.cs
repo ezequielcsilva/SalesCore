@@ -113,4 +113,81 @@ public class CreateOrderCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Errors.Should().Contain(VoucherErrors.Expired);
     }
+
+    [Fact]
+    public async Task Handle_ShouldApplyDiscountCorrectly_WhenVoucherIsValid()
+    {
+        // Arrange
+        var faker = new Faker();
+        var orderItems = new List<CreateOrderItemRequest>
+        {
+            new(faker.Random.Guid(), 2, 100m),
+            new(faker.Random.Guid(), 1, 200m)
+        };
+
+        var request = new CreateOrderRequest(
+            faker.Random.Guid(),
+            faker.Random.Guid(),
+            400m,
+            orderItems,
+            "VALID_VOUCHER",
+            true,
+            100m
+        );
+
+        var voucher = Voucher.Create("VALID_VOUCHER", null, 100m, 1, VoucherDiscountType.Value, DateTime.UtcNow.AddDays(1));
+
+        _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
+        _voucherRepository.GetVoucherByCode(Arg.Any<string>()).Returns(voucher);
+
+        // Act
+        var result = await _handler.Handle(new CreateOrderCommand(request), CancellationToken.None);
+
+        // Assert
+        result.IsSuccess.Should().BeTrue();
+        _orderRepository.Received(1).Add(Arg.Is<Order>(o => o.Discount == 100m && o.TotalAmount == 300m));
+    }
+
+    [Fact]
+    public async Task Handle_ShouldReturnFailure_WhenOrderTotalAmountDoesNotMatchAfterDiscount()
+    {
+        // Arrange
+        var faker = new Faker();
+        var orderItems = new List<CreateOrderItemRequest>
+        {
+            new(faker.Random.Guid(), 1, 100m),
+            new(faker.Random.Guid(), 2, 150m)
+        };
+
+        var totalAmountWithoutDiscount = 400m;
+        var discount = 50m;
+
+        var request = new CreateOrderRequest(
+            faker.Random.Guid(),
+            faker.Random.Guid(),
+            totalAmountWithoutDiscount,
+            orderItems,
+            "VALID_VOUCHER",
+            true,
+            discount
+        );
+
+        var order = Order.Create(request.CustomerId, request.BranchId, DateTime.UtcNow, true, discount);
+        order.AddItem(orderItems[0].ProductId, orderItems[0].Quantity, orderItems[0].Price);
+        order.AddItem(orderItems[1].ProductId, orderItems[1].Quantity, orderItems[1].Price);
+
+        order.GetType().GetProperty(nameof(Order.TotalAmount))!.SetValue(order, 300m);
+
+        var voucher = Voucher.Create("VALID_VOUCHER", null, 100m, 1, VoucherDiscountType.Value, DateTime.UtcNow.AddDays(1));
+
+        _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
+        _voucherRepository.GetVoucherByCode(Arg.Any<string>()).Returns(voucher);
+
+        // Act
+        var result = await _handler.Handle(new CreateOrderCommand(request), CancellationToken.None);
+
+        // Assert
+        result.IsFailure.Should().BeTrue();
+        result.Errors.Should().ContainSingle(e => e == OrderErrors.TotalAmountMismatch);
+    }
 }

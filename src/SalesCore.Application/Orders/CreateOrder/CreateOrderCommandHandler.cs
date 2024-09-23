@@ -18,7 +18,7 @@ internal sealed class CreateOrderCommandHandler(IDateTimeProvider dateTimeProvid
         if (applyVoucherResult.IsFailure)
             return Result.Failure<CreateOrderResult>(applyVoucherResult.Errors);
 
-        var validateOrderResult = IsOrderValid(request, order);
+        var validateOrderResult = ValidateOrderTotalAmount(request, order);
 
         if (validateOrderResult.IsFailure)
             return Result.Failure<CreateOrderResult>(validateOrderResult.Errors);
@@ -64,14 +64,13 @@ internal sealed class CreateOrderCommandHandler(IDateTimeProvider dateTimeProvid
         return Result.Success();
     }
 
-    private static Result IsOrderValid(CreateOrderCommand request, Order order)
+    private static Result ValidateOrderTotalAmount(CreateOrderCommand request, Order order)
     {
-        var orderAmount = request.Order.Amount;
-        var orderDiscount = request.Order.Discount;
+        var expectedAmountAfterDiscount = request.Order.Amount - request.Order.Discount;
 
-        if (order.TotalAmount != orderAmount)
+        if (order.TotalAmount != expectedAmountAfterDiscount)
             return Result.Failure(OrderErrors.TotalAmountMismatch);
 
-        return order.Discount != orderDiscount ? Result.Failure(OrderErrors.SentAmountMismatch) : Result.Success();
+        return order.Discount != request.Order.Discount ? Result.Failure(OrderErrors.SentAmountMismatch) : Result.Success();
     }
 }

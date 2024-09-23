@@ -34,7 +34,7 @@ public sealed class Order : Entity, IAggregateRoot
     public DateTime DateAdded { get; private set; }
     public OrderStatus OrderStatus { get; private set; }
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
-    public Voucher Voucher { get; private set; } = default!;
+    public Voucher? Voucher { get; private set; }
 
     public static Order Create(Guid customerId, Guid branchId, DateTime dateAdded,
                                bool hasVoucher = false, decimal discount = 0, Guid? voucherId = null)
@@ -105,7 +105,7 @@ public sealed class Order : Entity, IAggregateRoot
         {
             discount = (total * Voucher.Percentage.Value) / 100;
         }
-        else if (Voucher.Discount.HasValue)
+        else if (Voucher?.Discount is not null)
         {
             discount = Voucher.Discount.Value;
         }
