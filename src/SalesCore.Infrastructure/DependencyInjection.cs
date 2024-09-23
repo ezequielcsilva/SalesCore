@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Asp.Versioning;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -21,6 +22,12 @@ public static class DependencyInjection
         AddDateTimeProvider(services);
 
         AddPersistence(services, configuration);
+
+        AddHealthChecks(services, configuration);
+
+        AddApiVersioning(services);
+
+        AddConfigCors(services, configuration);
 
         return services;
     }
@@ -51,5 +58,42 @@ public static class DependencyInjection
 
         services.AddSingleton<ISqlConnectionFactory>(_ =>
             new SqlConnectionFactory(connectionString));
+    }
+
+    private static void AddHealthChecks(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHealthChecks()
+            .AddNpgSql(configuration.GetConnectionString("Database")!);
+    }
+
+    private static void AddApiVersioning(IServiceCollection services)
+    {
+        services
+            .AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1);
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddMvc()
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'V";
+                options.SubstituteApiVersionInUrl = true;
+            });
+    }
+
+    private static void AddConfigCors(IServiceCollection services, IConfiguration configuration)
+    {
+        services
+            .AddCors(options =>
+            {
+                options.AddPolicy("SalesCoreOrigins", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader();
+                });
+            });
     }
 }
