@@ -20,7 +20,7 @@ public abstract class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppF
 
     public void Dispose()
     {
-        _scope?.Dispose();
-        DbContext?.Dispose();
+        _scope.Dispose();
+        DbContext.Dispose();
     }
 }

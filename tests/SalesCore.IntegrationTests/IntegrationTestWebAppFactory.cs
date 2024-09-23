@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
+using Npgsql;
+using SalesCore.Application.Abstractions.Data;
 using SalesCore.Infrastructure;
 using Testcontainers.PostgreSql;
 
@@ -30,8 +31,17 @@ public class IntegrationTestWebAppFactory
                 services.Remove(descriptor);
             }
 
-            services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseNpgsql(_dbContainer.GetConnectionString()));
+            var dbDataSource = new NpgsqlDataSourceBuilder(_dbContainer.GetConnectionString())
+                .EnableDynamicJson()
+                .Build();
+
+            services.AddDbContext<IDbContext, ApplicationDbContext>((sp, options) =>
+            {
+                options.UseNpgsql(dbDataSource)
+                    .UseSnakeCaseNamingConvention();
+            });
+
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
         });
     }
 
