@@ -1,11 +1,12 @@
-﻿using SalesCore.Application.Abstractions.Messaging;
+﻿using SalesCore.Application.Abstractions.Data;
+using SalesCore.Application.Abstractions.Messaging;
 using SalesCore.Application.Orders.CreateOrder;
 using SalesCore.Domain.Abstractions;
 using SalesCore.Domain.Orders;
 
 namespace SalesCore.Application.Orders.UpdateOrder;
 
-internal sealed class UpdateOrderCommandHandler(IOrderRepository orderRepository) : ICommandHandler<UpdateOrderCommand, UpdateOrderResult>
+internal sealed class UpdateOrderCommandHandler(IOrderRepository orderRepository, IDbContext dbContext) : ICommandHandler<UpdateOrderCommand, UpdateOrderResult>
 {
     public async Task<Result<UpdateOrderResult>> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
@@ -25,9 +26,9 @@ internal sealed class UpdateOrderCommandHandler(IOrderRepository orderRepository
         {
             order.AddItem(item.ProductId, item.Quantity, item.Price);
         }
-
         orderRepository.Update(order);
-        // Todo: SaveChanges
+
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(new UpdateOrderResult(order.Id));
     }

@@ -2,9 +2,11 @@
 using FluentAssertions;
 using NSubstitute;
 using SalesCore.Application.Abstractions.Clock;
+using SalesCore.Application.Abstractions.Data;
 using SalesCore.Application.Orders.CreateOrder;
 using SalesCore.Domain.Orders;
 using SalesCore.Domain.Vouchers;
+using System.Data;
 
 namespace SalesCore.UnitTests.Application.Orders;
 
@@ -13,6 +15,7 @@ public class CreateOrderCommandHandlerTests
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IVoucherRepository _voucherRepository;
     private readonly IOrderRepository _orderRepository;
+    private readonly IDbContext _dbContext;
     private readonly CreateOrderCommandHandler _handler;
     private readonly Faker _faker;
 
@@ -21,7 +24,8 @@ public class CreateOrderCommandHandlerTests
         _dateTimeProvider = Substitute.For<IDateTimeProvider>();
         _voucherRepository = Substitute.For<IVoucherRepository>();
         _orderRepository = Substitute.For<IOrderRepository>();
-        _handler = new CreateOrderCommandHandler(_dateTimeProvider, _voucherRepository, _orderRepository);
+        _dbContext = Substitute.For<IDbContext>();
+        _handler = new CreateOrderCommandHandler(_dateTimeProvider, _voucherRepository, _orderRepository, _dbContext);
         _faker = new Faker();
     }
 

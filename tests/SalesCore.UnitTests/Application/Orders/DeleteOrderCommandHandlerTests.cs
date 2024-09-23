@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using FluentAssertions;
 using NSubstitute;
+using SalesCore.Application.Abstractions.Data;
 using SalesCore.Application.Orders.DeleteOrder;
 using SalesCore.Domain.Orders;
 
@@ -9,13 +10,15 @@ namespace SalesCore.UnitTests.Application.Orders;
 public class DeleteOrderCommandHandlerTests
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IDbContext _dbContext;
     private readonly DeleteOrderCommandHandler _handler;
     private readonly Faker _faker;
 
     public DeleteOrderCommandHandlerTests()
     {
         _orderRepository = Substitute.For<IOrderRepository>();
-        _handler = new DeleteOrderCommandHandler(_orderRepository);
+        _dbContext = Substitute.For<IDbContext>();
+        _handler = new DeleteOrderCommandHandler(_orderRepository, _dbContext);
         _faker = new Faker();
     }
 

@@ -1,4 +1,5 @@
 ﻿using SalesCore.Application.Abstractions.Clock;
+using SalesCore.Application.Abstractions.Data;
 using SalesCore.Application.Abstractions.Messaging;
 using SalesCore.Domain.Abstractions;
 using SalesCore.Domain.Orders;
@@ -7,7 +8,11 @@ using SalesCore.Domain.Vouchers.Specs;
 
 namespace SalesCore.Application.Orders.CreateOrder;
 
-internal sealed class CreateOrderCommandHandler(IDateTimeProvider dateTimeProvider, IVoucherRepository voucherRepository, IOrderRepository orderRepository) : ICommandHandler<CreateOrderCommand, CreateOrderResult>
+internal sealed class CreateOrderCommandHandler(
+    IDateTimeProvider dateTimeProvider, 
+    IVoucherRepository voucherRepository, 
+    IOrderRepository orderRepository, 
+    IDbContext dbContext) : ICommandHandler<CreateOrderCommand, CreateOrderResult>
 {
     public async Task<Result<CreateOrderResult>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
@@ -25,7 +30,7 @@ internal sealed class CreateOrderCommandHandler(IDateTimeProvider dateTimeProvid
 
         orderRepository.Add(order);
 
-        // Todo: SaveChange
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new CreateOrderResult(order.Id);
     }

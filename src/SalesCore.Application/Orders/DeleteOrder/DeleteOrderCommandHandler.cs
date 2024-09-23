@@ -1,10 +1,11 @@
-﻿using SalesCore.Application.Abstractions.Messaging;
+﻿using SalesCore.Application.Abstractions.Data;
+using SalesCore.Application.Abstractions.Messaging;
 using SalesCore.Domain.Abstractions;
 using SalesCore.Domain.Orders;
 
 namespace SalesCore.Application.Orders.DeleteOrder;
 
-internal sealed class DeleteOrderCommandHandler(IOrderRepository orderRepository) : ICommandHandler<DeleteOrderCommand>
+internal sealed class DeleteOrderCommandHandler(IOrderRepository orderRepository, IDbContext dbContext) : ICommandHandler<DeleteOrderCommand>
 {
     public async Task<Result> Handle(DeleteOrderCommand request, CancellationToken cancellationToken)
     {
@@ -12,10 +13,9 @@ internal sealed class DeleteOrderCommandHandler(IOrderRepository orderRepository
 
         if (order is null)
             return Result.Failure(OrderErrors.NotFound);
-
         orderRepository.Delete(order);
 
-        // Todo: Chamada para salvar as alterações (SaveChanges)
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
     }
