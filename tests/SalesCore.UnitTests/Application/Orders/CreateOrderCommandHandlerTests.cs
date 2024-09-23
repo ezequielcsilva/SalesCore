@@ -48,7 +48,7 @@ public class CreateOrderCommandHandlerTests
             0));
 
         _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
-        _voucherRepository.GetVoucherByCode(Arg.Any<string>()).Returns((Voucher?)null);
+        _voucherRepository.GetVoucherByCodeAsync(Arg.Any<string>()).Returns((Voucher?)null);
 
         // Act
         var result = await _handler.Handle(request, CancellationToken.None);
@@ -77,7 +77,7 @@ public class CreateOrderCommandHandlerTests
             0));
 
         _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
-        _voucherRepository.GetVoucherByCode("INVALID_VOUCHER").Returns((Voucher?)null);
+        _voucherRepository.GetVoucherByCodeAsync("INVALID_VOUCHER").Returns((Voucher?)null);
 
         // Act
         var result = await _handler.Handle(request, CancellationToken.None);
@@ -108,7 +108,7 @@ public class CreateOrderCommandHandlerTests
             0));
 
         _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
-        _voucherRepository.GetVoucherByCode("EXPIRED_VOUCHER").Returns(expiredVoucher);
+        _voucherRepository.GetVoucherByCodeAsync("EXPIRED_VOUCHER").Returns(expiredVoucher);
 
         // Act
         var result = await _handler.Handle(request, CancellationToken.None);
@@ -142,7 +142,7 @@ public class CreateOrderCommandHandlerTests
         var voucher = Voucher.Create("VALID_VOUCHER", null, 100m, 1, VoucherDiscountType.Value, DateTime.UtcNow.AddDays(1));
 
         _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
-        _voucherRepository.GetVoucherByCode(Arg.Any<string>()).Returns(voucher);
+        _voucherRepository.GetVoucherByCodeAsync(Arg.Any<string>()).Returns(voucher);
 
         // Act
         var result = await _handler.Handle(new CreateOrderCommand(request), CancellationToken.None);
@@ -185,7 +185,7 @@ public class CreateOrderCommandHandlerTests
         var voucher = Voucher.Create("VALID_VOUCHER", null, 100m, 1, VoucherDiscountType.Value, DateTime.UtcNow.AddDays(1));
 
         _dateTimeProvider.UtcNow.Returns(DateTime.UtcNow);
-        _voucherRepository.GetVoucherByCode(Arg.Any<string>()).Returns(voucher);
+        _voucherRepository.GetVoucherByCodeAsync(Arg.Any<string>()).Returns(voucher);
 
         // Act
         var result = await _handler.Handle(new CreateOrderCommand(request), CancellationToken.None);

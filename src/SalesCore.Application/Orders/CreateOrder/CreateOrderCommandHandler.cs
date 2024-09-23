@@ -51,7 +51,7 @@ internal sealed class CreateOrderCommandHandler(
     {
         if (!request.Order.HasVoucher) return Result.Success();
 
-        var voucher = await voucherRepository.GetVoucherByCode(request.Order.Voucher);
+        var voucher = await voucherRepository.GetVoucherByCodeAsync(request.Order.Voucher);
 
         if (voucher is null)
             return Result.Failure(VoucherErrors.VoucherNotFound);

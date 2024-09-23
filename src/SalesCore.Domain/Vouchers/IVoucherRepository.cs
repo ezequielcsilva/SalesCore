@@ -2,7 +2,7 @@
 
 public interface IVoucherRepository
 {
-    Task<Voucher?> GetVoucherByCode(string code);
+    Task<Voucher?> GetVoucherByCodeAsync(string code, CancellationToken cancellationToken = default);
 
     void Update(Voucher voucher);
 }
