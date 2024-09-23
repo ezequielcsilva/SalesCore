@@ -3,7 +3,7 @@ using SalesCore.Application.Abstractions.Data;
 
 namespace SalesCore.Infrastructure;
 
-internal sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options), IDbContext
+public sealed class ApplicationDbContext(DbContextOptions options) : DbContext(options), IDbContext
 {
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -1,5 +1,6 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using SalesCore.Api.Extensions;
 using SalesCore.Api.Middlewares;
 using SalesCore.Api.OpenApi;
 using SalesCore.Application;
@@ -25,17 +26,24 @@ builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI(options =>
+if (app.Environment.IsDevelopment())
 {
-    foreach (var description in app.DescribeApiVersions())
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
     {
-        var url = $"/swagger/{description.GroupName}/swagger.json";
-        var name = description.GroupName.ToUpperInvariant();
-        options.SwaggerEndpoint(url, name);
-    }
-});
+        foreach (var description in app.DescribeApiVersions())
+        {
+            var url = $"/swagger/{description.GroupName}/swagger.json";
+            var name = description.GroupName.ToUpperInvariant();
+            options.SwaggerEndpoint(url, name);
+        }
+    });
 
+    app.ApplyMigrations();
+
+    // REMARK: Uncomment if you want to seed initial data.
+    app.SeedData();
+}
 app.UseCors("SalesCoreOrigins");
 
 app.UseHttpsRedirection();

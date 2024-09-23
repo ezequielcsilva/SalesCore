@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,12 +53,16 @@ public static class DependencyInjection
                 .UseSnakeCaseNamingConvention();
         });
 
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
         services.AddScoped<IVoucherRepository, VoucherRepository>();
 
         services.AddScoped<IOrderRepository, OrderRepository>();
 
         services.AddSingleton<ISqlConnectionFactory>(_ =>
             new SqlConnectionFactory(connectionString));
+
+        SqlMapper.AddTypeHandler(new DateOnlyTypeHandler());
     }
 
     private static void AddHealthChecks(IServiceCollection services, IConfiguration configuration)
