@@ -10,7 +10,7 @@ internal sealed class ConfigureSwaggerOptions(IApiVersionDescriptionProvider pro
 {
     public void Configure(SwaggerGenOptions options)
     {
-        foreach (ApiVersionDescription description in provider.ApiVersionDescriptions)
+        foreach (var description in provider.ApiVersionDescriptions)
         {
             options.SwaggerDoc(description.GroupName, CreateVersionInfo(description));
         }

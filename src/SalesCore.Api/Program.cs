@@ -1,9 +1,15 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using SalesCore.Api.Middlewares;
+using SalesCore.Api.OpenApi;
 using SalesCore.Application;
 using SalesCore.Infrastructure;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, loggerConfig) =>
+    loggerConfig.ReadFrom.Configuration(context.Configuration));
 
 builder.Services.AddControllers();
 
@@ -14,6 +20,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddApplication();
 
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
 
 var app = builder.Build();
 
@@ -31,6 +39,12 @@ app.UseSwaggerUI(options =>
 app.UseCors("SalesCoreOrigins");
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<RequestContextLoggingMiddleware>();
+
+app.UseSerilogRequestLogging();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 
