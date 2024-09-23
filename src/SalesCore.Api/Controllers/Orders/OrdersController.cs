@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Asp.Versioning;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SalesCore.Application.Orders.CreateOrder;
 using SalesCore.Application.Orders.DeleteOrder;
@@ -8,6 +9,8 @@ using SalesCore.Application.Orders.UpdateOrder;
 namespace SalesCore.Api.Controllers.Orders;
 
 [ApiController]
+[ApiVersion(ApiVersions.V1)]
+[Route("api/v{version:apiVersion}/orders")]
 public class OrdersController(ISender sender) : ControllerBase
 {
     [HttpGet("{orderId:guid}")]
