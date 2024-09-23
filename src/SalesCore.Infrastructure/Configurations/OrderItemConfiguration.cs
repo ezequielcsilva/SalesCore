@@ -13,7 +13,7 @@ internal sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderIte
         builder.HasKey(c => c.Id);
 
         builder.HasOne<Order>()
-            .WithMany()
+            .WithMany(o => o.OrderItems)
             .HasForeignKey(oi => oi.OrderId);
     }
 }
