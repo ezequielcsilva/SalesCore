@@ -16,7 +16,7 @@ public static class SeedDataExtensions
 
         var localExpirationDate = DateTime.Now.AddYears(5).ToUniversalTime();
         context.Set<Voucher>().Add(Voucher.Create("30-OFF", 30, 0, 5000, VoucherDiscountType.Percentage, localExpirationDate));
-        context.Set<Voucher>().Add(Voucher.Create("50-OF", 0, 50, 5000, VoucherDiscountType.Value, localExpirationDate));
+        context.Set<Voucher>().Add(Voucher.Create("50-OFF", 0, 50, 5000, VoucherDiscountType.Value, localExpirationDate));
 
         context.SaveChanges();
     }
