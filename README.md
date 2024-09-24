@@ -46,7 +46,7 @@ Below is a preview of the Swagger UI used for interacting with the API:
 ### How to Run
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repository-url.git
+   git clone https://github.com/ezequielcsilva/SalesCore.git
 
 2. Navigate to the project directory:
    ```bash
