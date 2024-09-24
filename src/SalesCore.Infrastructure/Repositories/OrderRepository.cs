@@ -9,6 +9,7 @@ internal sealed class OrderRepository(ApplicationDbContext dbContext) : IOrderRe
     {
         return await dbContext
             .Set<Order>()
+            .Include(o => o.OrderItems)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
     }
 
